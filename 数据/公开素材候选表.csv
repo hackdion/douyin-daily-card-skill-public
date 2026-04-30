@@ -1,0 +1,11 @@
+id,名称,分类,来源,来源链接,授权,是否需要署名,署名文本,适合模块,公开风险,状态,备注
+asset-candidate-kenney-ui,Kenney 游戏 UI/图标素材,游戏,Kenney,https://kenney.nl/support,CC0,否,"",图标/信息条/游戏边框,低,候选,官方说明 asset pages 素材为 public domain licensed CC0
+asset-candidate-polyhaven-textures,Poly Haven 纹理材质,纹理,Poly Haven,https://polyhaven.com/,CC0,否,"",背景/纸张/金属/地面纹理,低,候选,官方首页声明资产为 CC0
+asset-candidate-game-icons,Game-icons.net 游戏图标,游戏,Game-icons.net,https://game-icons.net/about.html,CC BY 3.0,是,"Icons by Game-icons.net, CC BY 3.0",图标/徽章/任务标识,中,候选,可用但必须署名
+asset-candidate-nasa-space,NASA 星际图像,星际科技,NASA,https://www.nasa.gov/multimedia/guidelines/index.html,NASA Media Usage Guidelines,建议署名 NASA,"Source: NASA",星空/宇宙/科技背景,中,候选,不能暗示 NASA 背书；不能乱用 NASA 标志；人物和商业用途需谨慎
+asset-candidate-opengameart,OpenGameArt 游戏素材,游戏,OpenGameArt,https://opengameart.org/content/faq,混合授权,待确认,"",角色剪影/游戏道具/像素素材,中,候选,每个素材必须单独核验 license
+asset-candidate-openverse,Openverse 素材搜索,综合,Openverse,https://openverse.org/,混合授权,待确认,"",素材搜索入口,中,候选,Openverse 只是搜索入口；必须核验原始来源页
+asset-candidate-public-domain-review,Public Domain Review / PDIA 历史图像,杂志,Public Domain Review,https://publicdomainreview.org/blog/2025/01/announcing-the-public-domain-image-archive/,Public Domain,否,"",旧报纸/复古杂志/历史纹理,低,候选,适合做杂志和老报纸风格；仍需逐图保留来源
+asset-candidate-rawpixel-public-domain,Rawpixel Public Domain 公有领域集合,杂志,Rawpixel,https://www.rawpixel.com/services/licenses,CC0 或 Public Domain 标签,否,"",复古纸张/贴纸/装饰图,中,候选,只使用明确标为 Public Domain 或 CC0 的内容；不要混入商业授权素材
+asset-candidate-hero-patterns,Hero Patterns SVG 图案,纹理,Hero Patterns,https://github.com/lowmess/hero-patterns/blob/master/LICENSE,MIT,是,"Hero Patterns by Alec Lomas, MIT License",背景纹理/科技网格/几何图案,低,候选,适合做可代码化背景模块
+asset-candidate-haikei,Haikei SVG 背景生成器,星际科技,Haikei,https://haikei.app/,免费生成/具体使用条款待确认,待确认,"",抽象背景/波形/几何图形,中,候选,适合生成视觉参考；正式入库前需确认当前条款

@@ -1,0 +1,107 @@
+{
+  "说明": "模块是封面和底图的积木块。状态为 stable 的模块才允许被默认模板自动调用。",
+  "modules": [
+    {
+      "id": "canvas-1080x1440-safe-area",
+      "中文名": "1080x1440安全画布",
+      "类型": "画布模块",
+      "状态": "stable",
+      "用途": ["封面", "底图", "正文页"],
+      "默认参数": {
+        "width": 1080,
+        "height": 1440,
+        "safeMargin": 80
+      },
+      "依赖素材": []
+    },
+    {
+      "id": "text-account-date-id-basic",
+      "中文名": "账号日期ID基础信息组",
+      "类型": "信息模块",
+      "状态": "stable",
+      "用途": ["封面", "底图"],
+      "默认参数": {
+        "accountPosition": "left-top",
+        "idPosition": "right-bottom",
+        "datePosition": "center-lower"
+      },
+      "依赖素材": []
+    },
+    {
+      "id": "public-demo-silhouette-character",
+      "中文名": "公开演示剪影角色",
+      "类型": "角色模块",
+      "状态": "beta",
+      "用途": ["封面", "底图"],
+      "默认参数": {
+        "position": "right-bottom",
+        "opacity": 0.82,
+        "allowReplace": true
+      },
+      "依赖素材": ["CSS生成或公开剪影素材"]
+    },
+    {
+      "id": "interactive-text-slider-controls",
+      "中文名": "交互式文字滑杆控制",
+      "类型": "编辑器模块",
+      "状态": "beta",
+      "用途": ["封面", "底图", "参数确认"],
+      "默认参数": {
+        "fields": ["account", "title", "date", "douyin", "tag"],
+        "controls": ["x", "y", "size"],
+        "exportJson": true,
+        "importJson": true
+      },
+      "依赖素材": []
+    },
+    {
+      "id": "public-safe-css-mascot",
+      "中文名": "公开安全CSS抽象吉祥物",
+      "类型": "角色模块",
+      "状态": "beta",
+      "用途": ["封面", "底图", "公开演示"],
+      "默认参数": {
+        "variants": ["robot", "star", "sprite"],
+        "source": "CSS generated",
+        "allowReplace": true
+      },
+      "依赖素材": []
+    },
+    {
+      "id": "comic-halftone-background",
+      "中文名": "漫画半调网点背景",
+      "类型": "背景模块",
+      "状态": "draft",
+      "用途": ["封面", "底图"],
+      "默认参数": {
+        "density": "medium",
+        "contrast": "medium"
+      },
+      "依赖素材": ["待入库公开素材或CSS生成"]
+    },
+    {
+      "id": "radar-hud-background",
+      "中文名": "星际雷达HUD背景",
+      "类型": "背景模块",
+      "状态": "draft",
+      "用途": ["封面", "底图"],
+      "默认参数": {
+        "glow": "medium",
+        "grid": true
+      },
+      "依赖素材": ["CSS生成优先"]
+    },
+    {
+      "id": "magazine-title-lockup",
+      "中文名": "杂志封面标题组",
+      "类型": "标题模块",
+      "状态": "draft",
+      "用途": ["封面"],
+      "默认参数": {
+        "layout": "left-large",
+        "contrast": "high"
+      },
+      "依赖素材": []
+    }
+  ]
+}

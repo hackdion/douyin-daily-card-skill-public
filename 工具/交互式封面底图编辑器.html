@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>交互式封面/底图编辑器</title>
+  <style>
+    :root {
+      --ink: #10202b;
+      --muted: #6d7b86;
+      --panel: rgba(255, 255, 255, 0.82);
+      --line: rgba(18, 32, 43, 0.14);
+      --neon: #28f0d4;
+      --hot: #ff6f3d;
+      --gold: #ffd76a;
+      --radius: 24px;
+      font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(40, 240, 212, 0.30), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(255, 111, 61, 0.26), transparent 28%),
+        linear-gradient(135deg, #f7f1dc 0%, #e7f5f2 45%, #111d2a 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.14) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    .app {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(360px, 1fr);
+      gap: 22px;
+      width: min(1500px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+
+    .panel, .stage-shell {
+      border: 1px solid rgba(255,255,255,0.72);
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(7, 15, 26, 0.24);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel {
+      border-radius: var(--radius);
+      padding: 18px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.04em;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 999px;
+      color: #08252a;
+      background: linear-gradient(135deg, var(--neon), var(--gold));
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 0 28px rgba(40, 240, 212, 0.48);
+    }
+
+    .section {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.54);
+    }
+
+    .section h2 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 12px;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      color: #263b48;
+    }
+
+    .section h2::after {
+      content: "";
+      width: 88px;
+      height: 2px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--hot), transparent);
+    }
+
+    .grid { display: grid; gap: 10px; }
+    .two { grid-template-columns: 1fr 1fr; }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #52636e;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      border: 1px solid rgba(16,32,43,0.14);
+      border-radius: 13px;
+      font: inherit;
+    }
+
+    input, select, textarea {
+      padding: 10px 11px;
+      color: var(--ink);
+      background: rgba(255,255,255,0.86);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 118px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--hot);
+      background: transparent;
+    }
+
+    .segmented, .preset-grid, .role-grid, .actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .segmented { grid-template-columns: 1fr 1fr; }
+    .preset-grid { grid-template-columns: repeat(5, 1fr); }
+    .role-grid { grid-template-columns: repeat(3, 1fr); }
+    .actions { grid-template-columns: repeat(3, 1fr); }
+
+    button {
+      min-height: 42px;
+      padding: 8px 10px;
+      color: #20323d;
+      background: rgba(255,255,255,0.72);
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(18,32,43,0.14); }
+    button.active {
+      color: #06181c;
+      border-color: rgba(40, 240, 212, 0.76);
+      background: linear-gradient(135deg, rgba(40,240,212,0.88), rgba(255,215,106,0.78));
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 54px 1fr 42px;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stage-shell {
+      position: sticky;
+      top: 24px;
+      display: grid;
+      place-items: center;
+      min-height: calc(100vh - 48px);
+      border-radius: 32px;
+      padding: 22px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: min(62vh, 650px, 100%);
+      aspect-ratio: 3 / 4;
+      filter: drop-shadow(0 30px 55px rgba(0, 0, 0, 0.32));
+    }
+
+    #canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 1440px;
+      overflow: hidden;
+      border-radius: 34px;
+      background: var(--bg);
+      transform: scale(var(--scale, 0.5));
+      transform-origin: top left;
+    }
+
+    .canvas-wrap > #canvas {
+      width: 1080px;
+      height: 1440px;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 24% 16%, var(--orb1), transparent 28%),
+        radial-gradient(circle at 80% 30%, var(--orb2), transparent 30%),
+        linear-gradient(145deg, var(--bg1), var(--bg2) 52%, var(--bg3));
+    }
+
+    .bg-layer::before {
+      content: "";
+      position: absolute;
+      inset: 46px;
+      border: 4px solid rgba(255,255,255,0.30);
+      border-radius: 44px;
+      clip-path: polygon(0 0, 72% 0, 100% 20%, 100% 100%, 18% 100%, 0 78%);
+    }
+
+    .bg-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
+        repeating-linear-gradient(-12deg, transparent 0 34px, rgba(0,0,0,0.06) 35px 37px);
+      background-size: 72px 72px, 72px 72px, auto;
+      mix-blend-mode: overlay;
+    }
+
+    .comic-burst {
+      position: absolute;
+      right: -110px;
+      top: 168px;
+      width: 520px;
+      height: 520px;
+      background: repeating-conic-gradient(from 5deg, rgba(255,255,255,0.72) 0 9deg, transparent 9deg 18deg);
+      border-radius: 50%;
+      opacity: 0.45;
+    }
+
+    .hud-ring {
+      position: absolute;
+      left: 70px;
+      bottom: 122px;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      border: 6px dashed rgba(40,240,212,0.58);
+      box-shadow: inset 0 0 42px rgba(40,240,212,0.2), 0 0 46px rgba(40,240,212,0.24);
+    }
+
+    .magazine-bar {
+      position: absolute;
+      left: 54px;
+      right: 54px;
+      top: 54px;
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      border-bottom: 3px solid rgba(255,255,255,0.56);
+      color: rgba(255,255,255,0.88);
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+    }
+
+    .safe-note {
+      position: absolute;
+      right: 64px;
+      bottom: 58px;
+      padding: 12px 18px;
+      border: 2px solid rgba(255,255,255,0.42);
+      border-radius: 999px;
+      color: rgba(255,255,255,0.78);
+      background: rgba(6,16,24,0.26);
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .field {
+      position: absolute;
+      z-index: 4;
+      max-width: 900px;
+      color: var(--text);
+      text-shadow: 0 5px 24px rgba(0,0,0,0.24);
+      white-space: pre-wrap;
+    }
+
+    .account { font-weight: 950; letter-spacing: -0.02em; }
+    .title {
+      font-weight: 950;
+      line-height: 0.94;
+      letter-spacing: -0.065em;
+    }
+    .date, .douyin, .tag {
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+    .tag {
+      display: inline-block;
+      padding: 14px 22px;
+      border: 3px solid rgba(255,255,255,0.58);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+    }
+
+    .mascot {
+      position: absolute;
+      z-index: 3;
+      right: 86px;
+      bottom: 170px;
+      width: 360px;
+      height: 430px;
+    }
+
+    .mascot .body, .mascot .head, .mascot .ear, .mascot .eye, .mascot .wing, .mascot .tail {
+      position: absolute;
+      background: var(--mascot);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+    }
+
+    .mascot.robot .body {
+      left: 78px; bottom: 0; width: 210px; height: 248px; border-radius: 44px;
+      background: linear-gradient(145deg, var(--mascot), rgba(255,255,255,0.78));
+    }
+    .mascot.robot .head { left: 46px; top: 28px; width: 274px; height: 190px; border-radius: 48px; }
+    .mascot.robot .ear { top: 78px; width: 52px; height: 80px; border-radius: 22px; }
+    .mascot.robot .ear.left { left: 0; } .mascot.robot .ear.right { right: 0; }
+    .mascot.robot .eye { top: 104px; width: 42px; height: 42px; border-radius: 50%; background: #10202b; box-shadow: none; }
+    .mascot.robot .eye.left { left: 122px; } .mascot.robot .eye.right { right: 122px; }
+
+    .mascot.star .body {
+      left: 50px; top: 28px; width: 270px; height: 270px;
+      clip-path: polygon(50% 0, 61% 34%, 98% 35%, 68% 55%, 79% 91%, 50% 70%, 21% 91%, 32% 55%, 2% 35%, 39% 34%);
+    }
+    .mascot.star .head { left: 116px; top: 108px; width: 128px; height: 128px; border-radius: 50%; background: rgba(255,255,255,0.72); }
+    .mascot.star .eye { top: 154px; width: 22px; height: 28px; border-radius: 50%; background: #10202b; box-shadow: none; }
+    .mascot.star .eye.left { left: 154px; } .mascot.star .eye.right { right: 154px; }
+
+    .mascot.sprite .body {
+      left: 82px; bottom: 20px; width: 220px; height: 292px; border-radius: 55% 45% 38% 62%;
+      background: linear-gradient(160deg, var(--mascot), rgba(255,255,255,0.62));
+    }
+    .mascot.sprite .wing { top: 142px; width: 118px; height: 160px; border-radius: 70% 12% 70% 22%; opacity: 0.78; }
+    .mascot.sprite .wing.left { left: 0; transform: rotate(-22deg); } .mascot.sprite .wing.right { right: 0; transform: rotate(22deg) scaleX(-1); }
+    .mascot.sprite .eye { top: 178px; width: 28px; height: 36px; border-radius: 50%; background: #10202b; box-shadow: none; }
+    .mascot.sprite .eye.left { left: 150px; } .mascot.sprite .eye.right { right: 124px; }
+
+    .mode-base .account, .mode-base .douyin { opacity: 0.72; }
+    .mode-base .title { opacity: 0.20; mix-blend-mode: soft-light; }
+    .mode-base .tag { opacity: 0.55; }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .panel { max-height: none; }
+      .stage-shell { position: relative; top: 0; min-height: auto; }
+      .canvas-wrap { width: min(94vw, 520px); }
+      .preset-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="panel" data-testid="control-panel">
+      <div class="brand">
+        <h1>封面/底图<br>交互式编辑器</h1>
+        <div class="badge">PUBLIC SAFE</div>
+      </div>
+
+      <section class="section">
+        <h2>模式</h2>
+        <div class="segmented" data-testid="mode-switch">
+          <button type="button" data-mode="cover" class="active">封面</button>
+          <button type="button" data-mode="base">底图</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>模板</h2>
+        <div class="preset-grid" data-testid="preset-list"></div>
+      </section>
+
+      <section class="section">
+        <h2>角色占位</h2>
+        <div class="role-grid" data-testid="role-list">
+          <button type="button" data-role="robot" class="active">几何机器人</button>
+          <button type="button" data-role="star">星形精灵</button>
+          <button type="button" data-role="sprite">抽象飞灵</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>文案</h2>
+        <div class="grid">
+          <label>账号名 <input id="accountText" data-bind="account" value="演示日报研究所"></label>
+          <label>抖音号/ID <input id="idText" data-bind="douyin" value="抖音号：public-safe-demo"></label>
+          <label>标题 <input id="titleText" data-bind="title" value="今日冒险情报"></label>
+          <label>日期 <input id="dateText" data-bind="date" value="2026.04.30 周四"></label>
+          <label>标签文案 <input id="tagText" data-bind="tag" value="无真实 IP 图｜抽象占位"></label>
+        </div>
+      </section>
+
+      <section class="section" data-testid="slider-panel">
+        <h2>位置与字号</h2>
+        <div id="sliders" class="grid"></div>
+      </section>
+
+      <section class="section">
+        <h2>参数 JSON</h2>
+        <textarea id="jsonBox" data-testid="json-box" placeholder="点击导出后显示参数，也可粘贴 JSON 再导入"></textarea>
+        <div class="actions">
+          <button type="button" id="exportBtn" data-testid="export-json">导出 JSON</button>
+          <button type="button" id="importBtn" data-testid="import-json">导入 JSON</button>
+          <button type="button" id="resetBtn" data-testid="reset-preset">重置预设</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="stage-shell" aria-label="1080x1440 预览区">
+      <div class="canvas-wrap" data-testid="canvas-wrap">
+        <div id="canvas" class="mode-cover" data-testid="card-canvas">
+          <div class="bg-layer"></div>
+          <div class="comic-burst"></div>
+          <div class="hud-ring"></div>
+          <div class="magazine-bar"><span>DAILY CARD</span><span>3:4</span></div>
+          <div id="mascot" class="mascot robot" aria-hidden="true">
+            <i class="ear left"></i><i class="ear right"></i><i class="wing left"></i><i class="wing right"></i>
+            <i class="body"></i><i class="head"></i><i class="eye left"></i><i class="eye right"></i>
+          </div>
+          <div class="field account" data-field="account"></div>
+          <div class="field title" data-field="title"></div>
+          <div class="field date" data-field="date"></div>
+          <div class="field douyin" data-field="douyin"></div>
+          <div class="field tag" data-field="tag"></div>
+          <div class="safe-note">几何剪影 / 抽象吉祥物</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const presets = {
+      morning: { name: "早晨", bg1: "#ffe9a7", bg2: "#86f1df", bg3: "#235168", orb1: "#fff8d7", orb2: "#ff8d56", text: "#10202b", mascot: "#fff2a8" },
+      noon: { name: "午间", bg1: "#fff6df", bg2: "#ffb35f", bg3: "#1c75a6", orb1: "#ffffff", orb2: "#45f4d9", text: "#142235", mascot: "#7ff7e6" },
+      night: { name: "夜间", bg1: "#0a1230", bg2: "#183f73", bg3: "#7b4cff", orb1: "#27f0d1", orb2: "#ffd76a", text: "#f6fbff", mascot: "#9ef7ff" },
+      mon: { name: "周一", bg1: "#e9fff8", bg2: "#72d8ff", bg3: "#21345f", orb1: "#ffffff", orb2: "#28f0d4", text: "#10202b", mascot: "#caeeff" },
+      tue: { name: "周二", bg1: "#fff0d8", bg2: "#ff7f50", bg3: "#642d5f", orb1: "#ffd76a", orb2: "#ffffff", text: "#ffffff", mascot: "#ffd7b0" },
+      wed: { name: "周三", bg1: "#e7ffe4", bg2: "#42d392", bg3: "#0d3b48", orb1: "#ffffff", orb2: "#b8ff6a", text: "#092323", mascot: "#d7ff94" },
+      thu: { name: "周四", bg1: "#eef0ff", bg2: "#7c8cff", bg3: "#1b1958", orb1: "#ffec99", orb2: "#28f0d4", text: "#ffffff", mascot: "#c8ceff" },
+      fri: { name: "周五", bg1: "#fff0f4", bg2: "#ff4f8b", bg3: "#2b1746", orb1: "#ffffff", orb2: "#ffd76a", text: "#ffffff", mascot: "#ffc3d9" },
+      sat: { name: "周六", bg1: "#f7ffd9", bg2: "#ffe05d", bg3: "#248a8f", orb1: "#ffffff", orb2: "#ff6f3d", text: "#10202b", mascot: "#fff29a" },
+      sun: { name: "周日", bg1: "#fff4e1", bg2: "#f1a25f", bg3: "#503223", orb1: "#fff7c2", orb2: "#9cf7ef", text: "#ffffff", mascot: "#ffd8aa" }
+    };
+
+    const defaults = {
+      mode: "cover",
+      preset: "morning",
+      role: "robot",
+      text: {
+        account: "演示日报研究所",
+        douyin: "抖音号：public-safe-demo",
+        title: "今日冒险情报",
+        date: "2026.04.30 周四",
+        tag: "无真实 IP 图｜抽象占位"
+      },
+      layout: {
+        account: { x: 78, y: 126, size: 46 },
+        title: { x: 76, y: 330, size: 118 },
+        date: { x: 82, y: 260, size: 34 },
+        douyin: { x: 80, y: 1246, size: 30 },
+        tag: { x: 78, y: 1082, size: 34 }
+      }
+    };
+
+    let state = structuredClone(defaults);
+    const canvas = document.querySelector("#canvas");
+    const mascot = document.querySelector("#mascot");
+    const jsonBox = document.querySelector("#jsonBox");
+    const sliderHost = document.querySelector("#sliders");
+    const fieldNames = [
+      ["account", "账号"],
+      ["title", "标题"],
+      ["date", "日期"],
+      ["douyin", "抖音号"],
+      ["tag", "标签文案"]
+    ];
+
+    function buildPresetButtons() {
+      const host = document.querySelector("[data-testid='preset-list']");
+      host.innerHTML = Object.entries(presets).map(([key, preset]) =>
+        `<button type="button" data-preset="${key}">${preset.name}</button>`
+      ).join("");
+      host.addEventListener("click", event => {
+        const button = event.target.closest("[data-preset]");
+        if (!button) return;
+        state.preset = button.dataset.preset;
+        render();
+      });
+    }
+
+    function buildSliders() {
+      sliderHost.innerHTML = fieldNames.map(([key, label]) => `
+        <div class="section" style="margin:0;padding:10px;background:rgba(255,255,255,0.42)">
+          <h2 style="margin-bottom:8px">${label}</h2>
+          ${range(key, "x", "X", 0, 980)}
+          ${range(key, "y", "Y", 0, 1360)}
+          ${range(key, "size", "字号", 16, 160)}
+        </div>
+      `).join("");
+      sliderHost.addEventListener("input", event => {
+        const input = event.target.closest("input[type='range']");
+        if (!input) return;
+        state.layout[input.dataset.field][input.dataset.prop] = Number(input.value);
+        render();
+      });
+    }
+
+    function range(field, prop, label, min, max) {
+      const id = `${field}-${prop}`;
+      return `
+        <label class="range-row" for="${id}">
+          <span>${label}</span>
+          <input id="${id}" type="range" min="${min}" max="${max}" data-field="${field}" data-prop="${prop}">
+          <span data-value="${field}-${prop}"></span>
+        </label>
+      `;
+    }
+
+    function bindControls() {
+      document.querySelector("[data-testid='mode-switch']").addEventListener("click", event => {
+        const button = event.target.closest("[data-mode]");
+        if (!button) return;
+        state.mode = button.dataset.mode;
+        render();
+      });
+
+      document.querySelector("[data-testid='role-list']").addEventListener("click", event => {
+        const button = event.target.closest("[data-role]");
+        if (!button) return;
+        state.role = button.dataset.role;
+        render();
+      });
+
+      document.querySelectorAll("[data-bind]").forEach(input => {
+        input.addEventListener("input", () => {
+          state.text[input.dataset.bind] = input.value;
+          render();
+        });
+      });
+
+      document.querySelector("#exportBtn").addEventListener("click", () => {
+        jsonBox.value = JSON.stringify(state, null, 2);
+      });
+
+      document.querySelector("#importBtn").addEventListener("click", () => {
+        try {
+          const incoming = JSON.parse(jsonBox.value);
+          state = mergeState(defaults, incoming);
+          render();
+        } catch (error) {
+          alert("JSON 无法解析，请检查格式。");
+        }
+      });
+
+      document.querySelector("#resetBtn").addEventListener("click", () => {
+        const keepPreset = state.preset;
+        state = structuredClone(defaults);
+        state.preset = keepPreset;
+        render();
+      });
+
+      window.addEventListener("resize", fitCanvas);
+    }
+
+    function mergeState(base, incoming) {
+      return {
+        ...structuredClone(base),
+        ...incoming,
+        text: { ...base.text, ...(incoming.text || {}) },
+        layout: {
+          account: { ...base.layout.account, ...(incoming.layout?.account || {}) },
+          title: { ...base.layout.title, ...(incoming.layout?.title || {}) },
+          date: { ...base.layout.date, ...(incoming.layout?.date || {}) },
+          douyin: { ...base.layout.douyin, ...(incoming.layout?.douyin || {}) },
+          tag: { ...base.layout.tag, ...(incoming.layout?.tag || {}) }
+        }
+      };
+    }
+
+    function fitCanvas() {
+      const wrap = document.querySelector(".canvas-wrap");
+      const scale = Math.min(wrap.clientWidth / 1080, wrap.clientHeight / 1440);
+      canvas.style.setProperty("--scale", scale);
+      wrap.style.height = `${1440 * scale}px`;
+    }
+
+    function render() {
+      const preset = presets[state.preset] || presets.morning;
+      Object.entries(preset).forEach(([key, value]) => canvas.style.setProperty(`--${key}`, value));
+
+      canvas.className = `mode-${state.mode}`;
+      mascot.className = `mascot ${state.role}`;
+
+      document.querySelectorAll("[data-mode]").forEach(button => button.classList.toggle("active", button.dataset.mode === state.mode));
+      document.querySelectorAll("[data-preset]").forEach(button => button.classList.toggle("active", button.dataset.preset === state.preset));
+      document.querySelectorAll("[data-role]").forEach(button => button.classList.toggle("active", button.dataset.role === state.role));
+
+      Object.entries(state.text).forEach(([key, value]) => {
+        const input = document.querySelector(`[data-bind="${key}"]`);
+        const field = document.querySelector(`.field[data-field="${key}"]`);
+        if (input && input.value !== value) input.value = value;
+        if (field) field.textContent = value;
+      });
+
+      Object.entries(state.layout).forEach(([key, cfg]) => {
+        const field = document.querySelector(`.field[data-field="${key}"]`);
+        if (field) {
+          field.style.left = `${cfg.x}px`;
+          field.style.top = `${cfg.y}px`;
+          field.style.fontSize = `${cfg.size}px`;
+        }
+        ["x", "y", "size"].forEach(prop => {
+          const input = document.querySelector(`[data-field="${key}"][data-prop="${prop}"]`);
+          const value = document.querySelector(`[data-value="${key}-${prop}"]`);
+          if (input) input.value = cfg[prop];
+          if (value) value.textContent = cfg[prop];
+        });
+      });
+
+      fitCanvas();
+    }
+
+    buildPresetButtons();
+    buildSliders();
+    bindControls();
+    render();
+  </script>
+</body>
+</html>

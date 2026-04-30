@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公开素材候选预览页</title>
+  <style>
+    :root {
+      --bg: #101820;
+      --panel: rgba(255, 255, 255, 0.08);
+      --panel-strong: rgba(255, 255, 255, 0.14);
+      --ink: #f8f1df;
+      --muted: rgba(248, 241, 223, 0.68);
+      --line: rgba(248, 241, 223, 0.18);
+      --gold: #ffd15a;
+      --cyan: #62e6ff;
+      --rose: #ff6f91;
+      --mint: #9effd4;
+      --paper: #f7ebc8;
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+      --font-title: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --font-code: "DIN Alternate", "SF Mono", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font-title);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(98, 230, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 82% 10%, rgba(255, 209, 90, 0.18), transparent 26%),
+        linear-gradient(135deg, #111820 0%, #172332 48%, #261b26 100%);
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 28px 22px;
+      background: rgba(10, 16, 24, 0.82);
+      border-right: 1px solid var(--line);
+      backdrop-filter: blur(22px);
+    }
+
+    .brand {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .brand-mark {
+      width: 58px;
+      height: 18px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), var(--gold), var(--rose));
+      box-shadow: 0 0 30px rgba(98, 230, 255, 0.36);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 260px;
+      font-size: 34px;
+      line-height: 1.05;
+      letter-spacing: -0.06em;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .control-block {
+      margin-bottom: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+    }
+
+    .control-block h2 {
+      margin: 0 0 12px;
+      color: rgba(248, 241, 223, 0.72);
+      font-family: var(--font-code);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px 12px;
+      color: var(--ink);
+      outline: none;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip,
+    .action {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.06);
+      cursor: pointer;
+    }
+
+    .chip.is-active {
+      color: #111820;
+      border-color: transparent;
+      background: var(--gold);
+    }
+
+    .action {
+      width: 100%;
+      margin-top: 8px;
+      color: var(--ink);
+      font-weight: 850;
+      border-radius: 16px;
+      background: rgba(98, 230, 255, 0.14);
+    }
+
+    .main {
+      padding: 34px;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 310px;
+      overflow: hidden;
+      margin-bottom: 30px;
+      border: 1px solid var(--line);
+      border-radius: 38px;
+      background:
+        linear-gradient(110deg, rgba(247, 235, 200, 0.14), transparent 42%),
+        radial-gradient(circle at 80% 30%, rgba(255, 111, 145, 0.24), transparent 24%),
+        rgba(255, 255, 255, 0.07);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(112deg, transparent 0 22px, rgba(248, 241, 223, 0.08) 23px 25px),
+        radial-gradient(circle, rgba(248, 241, 223, 0.1) 0 3px, transparent 4px);
+      background-size: auto, 62px 62px;
+      opacity: 0.8;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 26px;
+      padding: 34px;
+      align-items: center;
+    }
+
+    .hero h2 {
+      margin: 0;
+      max-width: 720px;
+      font-size: clamp(40px, 6vw, 84px);
+      line-height: 0.96;
+      letter-spacing: -0.08em;
+      text-wrap: balance;
+    }
+
+    .hero p {
+      margin: 18px 0 0;
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .poster-stack {
+      position: relative;
+      min-height: 240px;
+    }
+
+    .poster-card {
+      position: absolute;
+      width: 190px;
+      height: 250px;
+      border: 1px solid rgba(248, 241, 223, 0.22);
+      border-radius: 22px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+    }
+
+    .poster-card.mag {
+      left: 0;
+      top: 0;
+      background: linear-gradient(90deg, var(--paper) 0 55%, #242a31 55% 100%);
+      transform: rotate(-8deg);
+    }
+
+    .poster-card.comic {
+      left: 112px;
+      top: 34px;
+      background:
+        radial-gradient(circle, rgba(20, 24, 32, 0.16) 0 4px, transparent 5px),
+        linear-gradient(135deg, #fff4a8, #ff6f91);
+      background-size: 22px 22px, auto;
+      transform: rotate(7deg);
+    }
+
+    .poster-card.tech {
+      left: 228px;
+      top: 0;
+      background:
+        repeating-radial-gradient(circle at 50% 45%, transparent 0 28px, rgba(98, 230, 255, 0.42) 29px 31px),
+        linear-gradient(180deg, #0e1b2a, #163b5d);
+      transform: rotate(-1deg);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: end;
+      margin: 0 0 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.04em;
+    }
+
+    .section-head span {
+      color: var(--muted);
+      font-family: var(--font-code);
+      font-size: 13px;
+    }
+
+    .direction-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .direction {
+      min-height: 220px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.18);
+    }
+
+    .direction-art {
+      height: 118px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .direction.magazine .direction-art {
+      background:
+        linear-gradient(90deg, #f5e8c7 0 52%, #222831 52% 100%),
+        repeating-linear-gradient(0deg, transparent 0 16px, rgba(0,0,0,.08) 17px 18px);
+    }
+
+    .direction.comic .direction-art {
+      background:
+        radial-gradient(circle, rgba(0,0,0,.18) 0 4px, transparent 5px),
+        linear-gradient(135deg, #fff06a, #ff6f91 58%, #62e6ff);
+      background-size: 24px 24px, auto;
+    }
+
+    .direction.game .direction-art {
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.18) 2px, transparent 2px),
+        linear-gradient(rgba(255,255,255,.18) 2px, transparent 2px),
+        linear-gradient(135deg, #23304a, #1bd0a4);
+      background-size: 28px 28px, 28px 28px, auto;
+    }
+
+    .direction.scifi .direction-art {
+      background:
+        repeating-radial-gradient(circle at 50% 50%, transparent 0 20px, rgba(98,230,255,.54) 21px 23px),
+        conic-gradient(from 30deg, transparent 0 55deg, rgba(98,230,255,.34) 56deg 72deg, transparent 73deg),
+        #0a1726;
+    }
+
+    .direction-body {
+      padding: 16px;
+    }
+
+    .direction h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .direction p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .candidate {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.18);
+    }
+
+    .candidate.is-selected {
+      border-color: rgba(255, 209, 90, 0.86);
+      box-shadow: 0 0 0 2px rgba(255, 209, 90, 0.2), 0 24px 80px rgba(0, 0, 0, 0.22);
+    }
+
+    .candidate-art {
+      position: relative;
+      height: 150px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .candidate-art::before,
+    .candidate-art::after {
+      content: "";
+      position: absolute;
+    }
+
+    .candidate-art.game {
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.16) 2px, transparent 2px),
+        linear-gradient(rgba(255,255,255,.16) 2px, transparent 2px),
+        linear-gradient(135deg, #1a2644, #23d18b);
+      background-size: 30px 30px, 30px 30px, auto;
+    }
+
+    .candidate-art.game::before {
+      left: 34px;
+      top: 42px;
+      width: 92px;
+      height: 64px;
+      border: 6px solid rgba(255,255,255,.7);
+      border-radius: 18px;
+      box-shadow: 108px 18px 0 -18px rgba(255, 209, 90, 0.76);
+    }
+
+    .candidate-art.texture {
+      background:
+        repeating-linear-gradient(0deg, rgba(80, 55, 35, 0.12) 0 3px, transparent 3px 9px),
+        linear-gradient(180deg, #f4e4bd, #b68249);
+    }
+
+    .candidate-art.texture::before {
+      inset: 26px;
+      border: 5px double rgba(65, 42, 25, 0.42);
+      border-radius: 18px;
+    }
+
+    .candidate-art.icon {
+      background:
+        radial-gradient(circle at 24% 30%, rgba(255, 209, 90, .8), transparent 16%),
+        radial-gradient(circle at 70% 60%, rgba(98, 230, 255, .8), transparent 18%),
+        linear-gradient(135deg, #202736, #121820);
+    }
+
+    .candidate-art.icon::before {
+      left: 44px;
+      top: 38px;
+      width: 72px;
+      height: 72px;
+      border: 5px solid var(--gold);
+      transform: rotate(45deg);
+    }
+
+    .candidate-art.space {
+      background:
+        radial-gradient(circle, rgba(255,255,255,.8) 0 2px, transparent 3px),
+        radial-gradient(circle at 70% 32%, rgba(98,230,255,.3), transparent 24%),
+        linear-gradient(180deg, #081120, #1e3356);
+      background-size: 58px 58px, auto, auto;
+    }
+
+    .candidate-art.comprehensive {
+      background:
+        linear-gradient(135deg, rgba(255,209,90,.7), transparent 36%),
+        linear-gradient(45deg, transparent 0 48%, rgba(98,230,255,.6) 49% 52%, transparent 53%),
+        #222a36;
+    }
+
+    .candidate-art.magazine {
+      background:
+        linear-gradient(90deg, #f7ebc8 0 52%, #2a303a 52% 100%);
+    }
+
+    .candidate-art.pattern {
+      background:
+        radial-gradient(circle, rgba(248,241,223,.32) 0 5px, transparent 6px),
+        linear-gradient(135deg, #253149, #151c27);
+      background-size: 34px 34px, auto;
+    }
+
+    .candidate-art.generator {
+      background:
+        radial-gradient(circle at 32% 50%, rgba(255,111,145,.6), transparent 22%),
+        radial-gradient(circle at 72% 32%, rgba(98,230,255,.56), transparent 20%),
+        radial-gradient(circle at 60% 80%, rgba(255,209,90,.5), transparent 24%),
+        #121820;
+    }
+
+    .candidate-body {
+      padding: 18px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 25px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .pill.low { color: #111820; border: 0; background: var(--mint); }
+    .pill.mid { color: #17120b; border: 0; background: var(--gold); }
+    .pill.status { color: var(--cyan); }
+
+    .candidate h3 {
+      margin: 0 0 10px;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .candidate p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .candidate-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .small-btn {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 11px;
+      color: var(--ink);
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .small-btn.pick {
+      background: rgba(255, 209, 90, 0.16);
+    }
+
+    .drawer {
+      margin-top: 24px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .drawer pre {
+      overflow: auto;
+      margin: 12px 0 0;
+      padding: 14px;
+      border-radius: 16px;
+      color: #d7fff0;
+      background: #091018;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .empty {
+      padding: 30px;
+      border: 1px dashed var(--line);
+      border-radius: 28px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; }
+      .hero-content { grid-template-columns: 1fr; }
+      .direction-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 680px) {
+      .main { padding: 20px; }
+      .direction-grid { grid-template-columns: 1fr; }
+      .poster-stack { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <h1>公开素材候选预览页</h1>
+        <p>先看来源和视觉方向，再决定是否下载入库。这个页面不保存真实素材，只帮助人工筛选。</p>
+      </div>
+
+      <section class="control-block">
+        <h2>Search</h2>
+        <input id="searchInput" type="search" placeholder="搜索来源、分类、模块、授权">
+      </section>
+
+      <section class="control-block">
+        <h2>Category</h2>
+        <div class="chip-row" id="categoryChips"></div>
+      </section>
+
+      <section class="control-block">
+        <h2>Risk</h2>
+        <div class="chip-row" id="riskChips"></div>
+      </section>
+
+      <section class="control-block">
+        <h2>Actions</h2>
+        <button class="action" id="copySelectionBtn" type="button">复制待评审清单 JSON</button>
+        <button class="action" id="clearSelectionBtn" type="button">清空选择</button>
+      </section>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <div class="hero-content">
+          <div>
+            <h2>把素材选择变成可验证流程</h2>
+            <p>这里展示的是公开安全素材来源和设计方向。下一步会把你挑中的候选拆成背景、标题、角色、信息条、内容区和特效模块，进入模块注册表。</p>
+          </div>
+          <div class="poster-stack" aria-hidden="true">
+            <div class="poster-card mag"></div>
+            <div class="poster-card comic"></div>
+            <div class="poster-card tech"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-head">
+        <div>
+          <h2>四个优先视觉方向</h2>
+        </div>
+        <span>magazine / comic / game / sci-fi</span>
+      </div>
+      <section class="direction-grid" id="directionGrid"></section>
+
+      <div class="section-head">
+        <div>
+          <h2>公开素材来源候选</h2>
+        </div>
+        <span id="resultCount"></span>
+      </div>
+      <section class="grid" id="candidateGrid"></section>
+
+      <section class="drawer">
+        <strong>待评审清单</strong>
+        <p style="color: var(--muted); margin: 8px 0 0; line-height: 1.6;">点击候选卡片里的“加入评审”，这里会生成 JSON。后续可以把它写回素材台账，或者交给 agent 做下载和授权复核。</p>
+        <pre id="selectionOutput">[]</pre>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const visualDirections = [
+      {
+        id: "magazine",
+        name: "潮流杂志",
+        description: "适合审美、专题、图鉴和图片报道。需要纸张纹理、刊头、贴纸、条形码、分栏线。"
+      },
+      {
+        id: "comic",
+        name: "漫画爆炸",
+        description: "适合娱乐、梗图、四宫格入口。需要半调网点、速度线、爆炸框、对白框。"
+      },
+      {
+        id: "game",
+        name: "游戏 HUD",
+        description: "适合攻略、任务、道具、战斗信息。需要像素边框、徽章、任务卡、能量条。"
+      },
+      {
+        id: "scifi",
+        name: "星际科技",
+        description: "适合情报、战斗分析、版本观察。需要雷达环、扫描线、星图、坐标网格。"
+      }
+    ];
+
+    const candidates = [
+      {
+        id: "asset-candidate-kenney-ui",
+        name: "Kenney 游戏 UI / 图标素材",
+        category: "游戏",
+        source: "Kenney",
+        url: "https://kenney.nl/support",
+        license: "CC0",
+        attribution: "否",
+        credit: "",
+        module: "图标 / 信息条 / 游戏边框",
+        risk: "低",
+        status: "候选",
+        visual: "game",
+        note: "适合做公开 demo 的游戏化 UI、图标、边框和轻量角色。"
+      },
+      {
+        id: "asset-candidate-polyhaven-textures",
+        name: "Poly Haven 纹理材质",
+        category: "纹理",
+        source: "Poly Haven",
+        url: "https://polyhaven.com/",
+        license: "CC0",
+        attribution: "否",
+        credit: "",
+        module: "背景 / 纸张 / 金属 / 地面纹理",
+        risk: "低",
+        status: "候选",
+        visual: "texture",
+        note: "适合做旧纸、金属、墙面、粗糙材质和氛围背景。"
+      },
+      {
+        id: "asset-candidate-game-icons",
+        name: "Game-icons.net 游戏图标",
+        category: "游戏",
+        source: "Game-icons.net",
+        url: "https://game-icons.net/about.html",
+        license: "CC BY 3.0",
+        attribution: "是",
+        credit: "Icons by Game-icons.net, CC BY 3.0",
+        module: "图标 / 徽章 / 任务标识",
+        risk: "中",
+        status: "候选",
+        visual: "icon",
+        note: "图标量很大，适合信息条和游戏任务卡，但必须保留署名。"
+      },
+      {
+        id: "asset-candidate-nasa-space",
+        name: "NASA 星际图像",
+        category: "星际科技",
+        source: "NASA",
+        url: "https://www.nasa.gov/multimedia/guidelines/index.html",
+        license: "NASA Media Usage Guidelines",
+        attribution: "建议署名 NASA",
+        credit: "Source: NASA",
+        module: "星空 / 宇宙 / 科技背景",
+        risk: "中",
+        status: "候选",
+        visual: "space",
+        note: "适合星际科技方向，但不能暗示 NASA 背书，也不要乱用 NASA 标志。"
+      },
+      {
+        id: "asset-candidate-opengameart",
+        name: "OpenGameArt 游戏素材",
+        category: "游戏",
+        source: "OpenGameArt",
+        url: "https://opengameart.org/content/faq",
+        license: "混合授权",
+        attribution: "待确认",
+        credit: "",
+        module: "角色剪影 / 游戏道具 / 像素素材",
+        risk: "中",
+        status: "候选",
+        visual: "game",
+        note: "可挖到很多素材，但每个素材都要单独核验 license。"
+      },
+      {
+        id: "asset-candidate-openverse",
+        name: "Openverse 素材搜索",
+        category: "综合",
+        source: "Openverse",
+        url: "https://openverse.org/",
+        license: "混合授权",
+        attribution: "待确认",
+        credit: "",
+        module: "素材搜索入口",
+        risk: "中",
+        status: "候选",
+        visual: "comprehensive",
+        note: "只能当搜索入口，不能只信搜索结果，必须核验原始来源页。"
+      },
+      {
+        id: "asset-candidate-public-domain-review",
+        name: "Public Domain Review / PDIA 历史图像",
+        category: "杂志",
+        source: "Public Domain Review",
+        url: "https://publicdomainreview.org/blog/2025/01/announcing-the-public-domain-image-archive/",
+        license: "Public Domain",
+        attribution: "否",
+        credit: "",
+        module: "旧报纸 / 复古杂志 / 历史纹理",
+        risk: "低",
+        status: "候选",
+        visual: "magazine",
+        note: "适合杂志、旧报纸、蒸汽朋克和档案风格，需要逐图保留来源。"
+      },
+      {
+        id: "asset-candidate-rawpixel-public-domain",
+        name: "Rawpixel Public Domain 公有领域集合",
+        category: "杂志",
+        source: "Rawpixel",
+        url: "https://www.rawpixel.com/services/licenses",
+        license: "CC0 或 Public Domain 标签",
+        attribution: "否",
+        credit: "",
+        module: "复古纸张 / 贴纸 / 装饰图",
+        risk: "中",
+        status: "候选",
+        visual: "magazine",
+        note: "只使用明确标为 Public Domain 或 CC0 的内容，避免混入商业授权素材。"
+      },
+      {
+        id: "asset-candidate-hero-patterns",
+        name: "Hero Patterns SVG 图案",
+        category: "纹理",
+        source: "Hero Patterns",
+        url: "https://github.com/lowmess/hero-patterns/blob/master/LICENSE",
+        license: "MIT",
+        attribution: "是",
+        credit: "Hero Patterns by Alec Lomas, MIT License",
+        module: "背景纹理 / 科技网格 / 几何图案",
+        risk: "低",
+        status: "候选",
+        visual: "pattern",
+        note: "适合代码化背景模块，能做低体积、可调色的公开 demo 背景。"
+      },
+      {
+        id: "asset-candidate-haikei",
+        name: "Haikei SVG 背景生成器",
+        category: "星际科技",
+        source: "Haikei",
+        url: "https://haikei.app/",
+        license: "免费生成 / 条款待确认",
+        attribution: "待确认",
+        credit: "",
+        module: "抽象背景 / 波形 / 几何图形",
+        risk: "中",
+        status: "候选",
+        visual: "generator",
+        note: "适合生成视觉参考和抽象背景；正式入库前需确认当前条款。"
+      }
+    ];
+
+    const state = {
+      category: "全部",
+      risk: "全部",
+      query: "",
+      selected: new Set()
+    };
+
+    const categoryChips = document.getElementById("categoryChips");
+    const riskChips = document.getElementById("riskChips");
+    const candidateGrid = document.getElementById("candidateGrid");
+    const directionGrid = document.getElementById("directionGrid");
+    const resultCount = document.getElementById("resultCount");
+    const selectionOutput = document.getElementById("selectionOutput");
+    const searchInput = document.getElementById("searchInput");
+
+    function makeChip(label, type) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `chip${state[type] === label ? " is-active" : ""}`;
+      button.textContent = label;
+      button.addEventListener("click", () => {
+        state[type] = label;
+        render();
+      });
+      return button;
+    }
+
+    function renderControls() {
+      const categories = ["全部", ...Array.from(new Set(candidates.map(item => item.category)))];
+      const risks = ["全部", ...Array.from(new Set(candidates.map(item => item.risk)))];
+      categoryChips.innerHTML = "";
+      riskChips.innerHTML = "";
+      categories.forEach(label => categoryChips.appendChild(makeChip(label, "category")));
+      risks.forEach(label => riskChips.appendChild(makeChip(label, "risk")));
+    }
+
+    function renderDirections() {
+      directionGrid.innerHTML = "";
+      visualDirections.forEach(direction => {
+        const card = document.createElement("article");
+        card.className = `direction ${direction.id}`;
+        card.innerHTML = `
+          <div class="direction-art"></div>
+          <div class="direction-body">
+            <h3>${direction.name}</h3>
+            <p>${direction.description}</p>
+          </div>
+        `;
+        directionGrid.appendChild(card);
+      });
+    }
+
+    function matches(candidate) {
+      const query = state.query.trim().toLowerCase();
+      const text = [
+        candidate.id,
+        candidate.name,
+        candidate.category,
+        candidate.source,
+        candidate.license,
+        candidate.module,
+        candidate.note
+      ].join(" ").toLowerCase();
+      return (state.category === "全部" || candidate.category === state.category)
+        && (state.risk === "全部" || candidate.risk === state.risk)
+        && (!query || text.includes(query));
+    }
+
+    function renderCandidates() {
+      const visible = candidates.filter(matches);
+      resultCount.textContent = `${visible.length} / ${candidates.length} 个候选`;
+      candidateGrid.innerHTML = "";
+      if (!visible.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "没有匹配候选。请调整分类、风险或搜索词。";
+        candidateGrid.appendChild(empty);
+        return;
+      }
+      visible.forEach(candidate => {
+        const card = document.createElement("article");
+        card.className = `candidate${state.selected.has(candidate.id) ? " is-selected" : ""}`;
+        const riskClass = candidate.risk === "低" ? "low" : "mid";
+        card.innerHTML = `
+          <div class="candidate-art ${candidate.visual}"></div>
+          <div class="candidate-body">
+            <div class="meta">
+              <span class="pill">${candidate.category}</span>
+              <span class="pill ${riskClass}">风险：${candidate.risk}</span>
+              <span class="pill status">${candidate.status}</span>
+            </div>
+            <h3>${candidate.name}</h3>
+            <p>${candidate.note}</p>
+            <p><strong>授权：</strong>${candidate.license}<br><strong>适合模块：</strong>${candidate.module}</p>
+            <div class="candidate-actions">
+              <a class="small-btn" href="${candidate.url}" target="_blank" rel="noreferrer">打开来源</a>
+              <button class="small-btn pick" type="button" data-id="${candidate.id}">${state.selected.has(candidate.id) ? "移出评审" : "加入评审"}</button>
+            </div>
+          </div>
+        `;
+        card.querySelector("button").addEventListener("click", () => {
+          if (state.selected.has(candidate.id)) {
+            state.selected.delete(candidate.id);
+          } else {
+            state.selected.add(candidate.id);
+          }
+          render();
+        });
+        candidateGrid.appendChild(card);
+      });
+    }
+
+    function selectedPayload() {
+      return candidates
+        .filter(candidate => state.selected.has(candidate.id))
+        .map(({ id, name, category, source, url, license, attribution, credit, module, risk, status }) => ({
+          id,
+          名称: name,
+          分类: category,
+          来源: source,
+          来源链接: url,
+          授权: license,
+          是否需要署名: attribution,
+          署名文本: credit,
+          适合模块: module,
+          公开风险: risk,
+          状态: status
+        }));
+    }
+
+    function renderSelection() {
+      selectionOutput.textContent = JSON.stringify(selectedPayload(), null, 2);
+    }
+
+    function render() {
+      renderControls();
+      renderDirections();
+      renderCandidates();
+      renderSelection();
+    }
+
+    searchInput.addEventListener("input", event => {
+      state.query = event.target.value;
+      render();
+    });
+
+    document.getElementById("copySelectionBtn").addEventListener("click", async () => {
+      const text = JSON.stringify(selectedPayload(), null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        selectionOutput.textContent = text || "[]";
+      } catch {
+        selectionOutput.textContent = text || "[]";
+      }
+    });
+
+    document.getElementById("clearSelectionBtn").addEventListener("click", () => {
+      state.selected.clear();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

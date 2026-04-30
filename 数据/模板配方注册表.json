@@ -1,0 +1,112 @@
+{
+  "说明": "模板配方由多个模块组合而成。只有 stable 模板允许被 agent 自动选择。",
+  "templates": [
+    {
+      "id": "public-safe-v1-white-tech",
+      "中文名": "公开安全白色科技日报",
+      "状态": "stable",
+      "支持输出": ["cover", "content-pages"],
+      "适合用途": ["普通日报", "文字资讯", "稳定输出"],
+      "不适合用途": ["强娱乐", "漫画四宫格", "强视觉海报"],
+      "模块": [
+        "canvas-1080x1440-safe-area",
+        "text-account-date-id-basic"
+      ],
+      "所需素材": [],
+      "示例输入": "skills/douyin-daily-card/examples/2026-04-25-input.md",
+      "示例输出": "",
+      "验证状态": "已由基础脚本验证"
+    },
+    {
+      "id": "weekday-cover-base-v1-public-demo",
+      "中文名": "公开演示周一到周日封面底图",
+      "状态": "beta",
+      "支持输出": ["cover", "base"],
+      "适合用途": ["连续栏目", "按日期发布", "封面底图组合"],
+      "不适合用途": ["突发强警报", "超长正文分页"],
+      "模块": [
+        "canvas-1080x1440-safe-area",
+        "text-account-date-id-basic",
+        "public-demo-silhouette-character",
+        "public-safe-css-mascot",
+        "interactive-text-slider-controls"
+      ],
+      "所需素材": [],
+      "示例输入": "工具/交互式封面底图编辑器.html",
+      "示例输出": "交互式导出 JSON",
+      "验证状态": "由 scripts/validate-public-tools.mjs 验证"
+    },
+    {
+      "id": "interactive-cover-base-editor-v1",
+      "中文名": "交互式封面底图编辑器 v1",
+      "状态": "beta",
+      "支持输出": ["cover-config", "base-config"],
+      "适合用途": ["人工调参", "模板探索", "公开安全演示"],
+      "不适合用途": ["自动最终出图", "未验证生产发布"],
+      "模块": [
+        "canvas-1080x1440-safe-area",
+        "text-account-date-id-basic",
+        "interactive-text-slider-controls",
+        "public-safe-css-mascot"
+      ],
+      "所需素材": [],
+      "示例输入": "工具/交互式封面底图编辑器.html",
+      "示例输出": "JSON 参数",
+      "验证状态": "由 scripts/validate-public-tools.mjs 验证"
+    },
+    {
+      "id": "comic-impact-cover-v1",
+      "中文名": "漫画冲击封面",
+      "状态": "draft",
+      "支持输出": ["cover", "base"],
+      "适合用途": ["娱乐", "四宫格入口", "轻松内容"],
+      "不适合用途": ["严肃长文", "政策公告"],
+      "模块": [
+        "canvas-1080x1440-safe-area",
+        "text-account-date-id-basic",
+        "comic-halftone-background",
+        "public-demo-silhouette-character"
+      ],
+      "所需素材": ["漫画半调网点", "爆炸框", "剪影角色"],
+      "示例输入": "",
+      "示例输出": "",
+      "验证状态": "待设计"
+    },
+    {
+      "id": "sci-fi-radar-cover-v1",
+      "中文名": "星际雷达封面",
+      "状态": "draft",
+      "支持输出": ["cover", "base"],
+      "适合用途": ["科技感资讯", "情报", "战斗分析", "版本观察"],
+      "不适合用途": ["温柔审美", "旧报纸风"],
+      "模块": [
+        "canvas-1080x1440-safe-area",
+        "text-account-date-id-basic",
+        "radar-hud-background",
+        "public-demo-silhouette-character"
+      ],
+      "所需素材": ["HUD线框或CSS生成", "剪影角色"],
+      "示例输入": "",
+      "示例输出": "",
+      "验证状态": "待设计"
+    },
+    {
+      "id": "magazine-poster-cover-v1",
+      "中文名": "潮流杂志封面",
+      "状态": "draft",
+      "支持输出": ["cover", "base"],
+      "适合用途": ["审美向", "图片报道", "专题封面"],
+      "不适合用途": ["纯正文长文", "严肃公告"],
+      "模块": [
+        "canvas-1080x1440-safe-area",
+        "text-account-date-id-basic",
+        "magazine-title-lockup",
+        "public-demo-silhouette-character"
+      ],
+      "所需素材": ["纸张纹理", "杂志贴纸", "剪影角色"],
+      "示例输入": "",
+      "示例输出": "",
+      "验证状态": "待设计"
+    }
+  ]
+}
