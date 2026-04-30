@@ -102,6 +102,7 @@ async function validateInteractiveEditor(browser) {
   }));
 
   await page.locator("[data-preset='sat']").click();
+  await page.locator("[data-role='boxbot']").click();
   await page.locator("[data-testid='mode-switch'] [data-mode='base']").click();
   await page.locator("#titleText").fill("公开演示日报标题");
   await page.locator("input[type='range'][data-field='title'][data-prop='size']").fill("88");
@@ -122,7 +123,7 @@ async function validateInteractiveEditor(browser) {
   await page.locator("[data-testid='json-box']").fill(JSON.stringify({
     mode: "cover",
     preset: "mon",
-    role: "star",
+    role: "boxbot",
     text: {
       account: "演示账号",
       douyin: "demo-001",
@@ -142,7 +143,7 @@ async function validateInteractiveEditor(browser) {
   const checks = [
     ["canvas-size", initial.canvasWidth === 1080 && initial.canvasHeight === 1440, `${initial.canvasWidth}x${initial.canvasHeight}`],
     ["preset-count", initial.presetButtons >= 7, `${initial.presetButtons}`],
-    ["role-count", initial.roleButtons >= 3, `${initial.roleButtons}`],
+    ["role-count", initial.roleButtons >= 4, `${initial.roleButtons}`],
     ["range-count", initial.rangeInputs >= 15, `${initial.rangeInputs}`],
     ["mode-switch", after.mode === "base", after.mode],
     ["preset-switch", after.preset === "sat", after.preset],

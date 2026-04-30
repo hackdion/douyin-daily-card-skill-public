@@ -61,7 +61,7 @@
       "状态": "beta",
       "用途": ["封面", "底图", "公开演示"],
       "默认参数": {
-        "variants": ["robot", "star", "sprite"],
+        "variants": ["robot", "star", "sprite", "boxbot"],
         "source": "CSS generated",
         "allowReplace": true
       },
