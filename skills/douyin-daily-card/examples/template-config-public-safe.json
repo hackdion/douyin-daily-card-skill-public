@@ -1,0 +1,20 @@
+{
+  "mode": "cover",
+  "preset": "sat",
+  "role": "boxbot",
+  "outputName": "public-safe-template-demo",
+  "text": {
+    "account": "演示日报研究所",
+    "douyin": "抖音号：public-safe-demo",
+    "title": "周末情报卡片",
+    "date": "2026.05.04",
+    "tag": "CSS纸箱机器人｜公开安全演示"
+  },
+  "layout": {
+    "account": { "x": 78, "y": 126, "size": 46 },
+    "title": { "x": 76, "y": 330, "size": 112 },
+    "date": { "x": 82, "y": 260, "size": 34 },
+    "douyin": { "x": 80, "y": 1246, "size": 30 },
+    "tag": { "x": 78, "y": 1082, "size": 34 }
+  }
+}

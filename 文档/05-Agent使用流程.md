@@ -24,9 +24,19 @@
 3. 用左侧输入框修改文案。
 4. 用滑杆调整 X、Y、字号。
 5. 导出 JSON 参数。
-6. 后续生成 PNG 时，把这份 JSON 参数写入过程记录。
+6. 把 JSON 保存成配置文件，或复制到任务输入里。
+7. 运行 `render-template.mjs` 生成 PNG。
+8. 运行 `validate-template.mjs` 验证 PNG。
+9. 把 JSON 参数写入过程记录。
 
-这个编辑器当前是 `beta`，适合视觉探索和参数确认；正式发布 PNG 仍需要经过脚本验证。
+这个编辑器当前是 `beta`，适合视觉探索和参数确认；正式发布 PNG 必须经过脚本渲染和验证。
+
+示例命令：
+
+```bash
+node skills/douyin-daily-card/scripts/render-template.mjs skills/douyin-daily-card/examples/template-config-public-safe.json --output /tmp/daily-card-template-test
+node skills/douyin-daily-card/scripts/validate-template.mjs /tmp/daily-card-template-test
+```
 
 ## 禁止行为
 

@@ -36,7 +36,8 @@
 │   ├── 07-版本升级规则.md
 │   ├── 08-公开素材来源核验记录.md
 │   ├── 09-执行记录-2026-04-30.md
-│   └── 10-功能清单与公开化路线图.md
+│   ├── 10-功能清单与公开化路线图.md
+│   └── 11-模板渲染链路说明.md
 ├── 数据/
 │   ├── 公开素材候选表.csv
 │   ├── 已入库素材清单.json
@@ -53,6 +54,10 @@
         ├── examples/
         ├── references/
         └── scripts/
+            ├── render-report.mjs
+            ├── validate-report.mjs
+            ├── render-template.mjs
+            └── validate-template.mjs
 ```
 
 ## 使用方式
@@ -63,6 +68,13 @@
 node skills/douyin-daily-card/scripts/render-report.mjs skills/douyin-daily-card/examples/2026-04-25-input.md --output /tmp/daily-card-skill-test
 node skills/douyin-daily-card/scripts/validate-report.mjs /tmp/daily-card-skill-test
 sips -g pixelWidth -g pixelHeight /tmp/daily-card-skill-test/[0-9][0-9]-*.png
+```
+
+交互式模板 JSON 渲染 PNG：
+
+```bash
+node skills/douyin-daily-card/scripts/render-template.mjs skills/douyin-daily-card/examples/template-config-public-safe.json --output /tmp/daily-card-template-test
+node skills/douyin-daily-card/scripts/validate-template.mjs /tmp/daily-card-template-test
 ```
 
 标准化设计流程：
@@ -83,6 +95,8 @@ sips -g pixelWidth -g pixelHeight /tmp/daily-card-skill-test/[0-9][0-9]-*.png
 调整账号、ID、标题、日期、标签文案
 用滑杆调整 X / Y / 字号
 导出 JSON 参数
+用 render-template.mjs 生成 PNG
+用 validate-template.mjs 验证 PNG
 ```
 
 素材候选人工筛选：
@@ -113,6 +127,6 @@ node scripts/validate-public-tools.mjs
 
 - 建立公开演示素材包。
 - 扩充素材候选预览页，从“来源级候选”升级到“具体素材级候选”。
-- 继续增强积木式 HTML 编辑器，补模块删减、拖拽和 PNG 导出。
-- 把稳定模板接入 CLI（命令行工具）。
+- 继续增强积木式 HTML 编辑器，补模块删减和拖拽。
+- 把模板配方注册表进一步接入 CLI（命令行工具）。
 - 在 CLI 稳定后再封装 MCP（Model Context Protocol，模型上下文协议）服务。

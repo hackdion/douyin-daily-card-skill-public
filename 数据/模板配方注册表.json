@@ -33,8 +33,8 @@
       ],
       "所需素材": [],
       "示例输入": "工具/交互式封面底图编辑器.html",
-      "示例输出": "交互式导出 JSON",
-      "验证状态": "由 scripts/validate-public-tools.mjs 验证"
+      "示例输出": "交互式导出 JSON / render-template.mjs 输出 PNG",
+      "验证状态": "由 scripts/validate-public-tools.mjs 和 validate-template.mjs 验证"
     },
     {
       "id": "interactive-cover-base-editor-v1",
@@ -50,9 +50,9 @@
         "public-safe-css-mascot"
       ],
       "所需素材": [],
-      "示例输入": "工具/交互式封面底图编辑器.html",
-      "示例输出": "JSON 参数",
-      "验证状态": "由 scripts/validate-public-tools.mjs 验证"
+      "示例输入": "skills/douyin-daily-card/examples/template-config-public-safe.json",
+      "示例输出": "render-template.mjs 输出 PNG",
+      "验证状态": "由 scripts/validate-public-tools.mjs 和 validate-template.mjs 验证"
     },
     {
       "id": "comic-impact-cover-v1",

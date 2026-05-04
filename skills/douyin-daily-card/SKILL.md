@@ -32,7 +32,7 @@ For modular cover/base work, also read these repository-level files before desig
 - `../../数据/模板配方注册表.json`
 - `../../文档/10-功能清单与公开化路线图.md` when checking whether a capability is public-ready or still private/local.
 
-If the user asks to visually tune a cover/base template or adjust positions/font sizes by hand, use the public-safe editor `../../工具/交互式封面底图编辑器.html` as the preview surface first. Export its JSON parameters and keep them with the final process record.
+If the user asks to visually tune a cover/base template or adjust positions/font sizes by hand, use the public-safe editor `../../工具/交互式封面底图编辑器.html` as the preview surface first. Export its JSON parameters, render them with `scripts/render-template.mjs`, validate with `scripts/validate-template.mjs`, and keep the JSON with the final process record.
 
 ## Hard Rules
 
@@ -47,7 +47,7 @@ If the user asks to visually tune a cover/base template or adjust positions/font
 - Do not use private IP assets in public examples. Use public-demo silhouettes, geometric placeholders, or user-provided private assets only in the user's private workspace.
 - Do not auto-select templates whose registry status is `draft` or `beta`; use them only when the user explicitly asks for an experimental template.
 - When collecting public assets, use `../../工具/素材候选预览页.html` and `../../数据/公开素材候选表.csv` as the review surface before downloading anything into the repository.
-- Treat `../../工具/交互式封面底图编辑器.html` as beta: it is suitable for public-safe interactive exploration, but it is not yet a replacement for the validated PNG render scripts.
+- Treat `../../工具/交互式封面底图编辑器.html` as beta: it is suitable for public-safe interactive exploration, but final PNG output must still be produced and checked by scripts.
 
 ## Standard Commands
 
@@ -66,6 +66,13 @@ node skills/douyin-daily-card/scripts/render-report.mjs input.md --output "$OUT_
 ```
 
 Both scripts auto-bootstrap Playwright with `npm exec --package=playwright@latest` if Node cannot load Playwright directly.
+
+For cover/base template JSON exported from the interactive editor:
+
+```bash
+node skills/douyin-daily-card/scripts/render-template.mjs skills/douyin-daily-card/examples/template-config-public-safe.json --output /tmp/daily-card-template-test
+node skills/douyin-daily-card/scripts/validate-template.mjs /tmp/daily-card-template-test
+```
 
 Validate public helper tools after editing `工具/` pages:
 
