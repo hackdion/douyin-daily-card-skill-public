@@ -36,41 +36,44 @@ async function main() {
 
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch();
-  const page = await browser.newPage({
-    viewport: { width: 1180, height: 1520 },
-    deviceScaleFactor: 1
-  });
-
   const errors = [];
   const warnings = [];
   const pageErrors = [];
-  page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(msg.text());
-    if (msg.type() === "warning") warnings.push(msg.text());
-  });
-  page.on("pageerror", (err) => pageErrors.push(err.message));
-
-  await page.goto(pathToFileURL(reportPath).href, { waitUntil: "load" });
-  await page.waitForFunction(() => window.__dailyReady === true, { timeout: 10000 });
-  const report = await collectReportMetrics(page);
-
-  await page.addStyleTag({ content: `
-    body { margin: 0 !important; background: transparent !important; }
-    .toolbar { display: none !important; }
-    .deck { display: block !important; padding: 0 !important; }
-    .page { margin: 0 !important; box-shadow: none !important; }
-  `});
-
-  const pages = page.locator(".page");
-  const pageCount = await pages.count();
-  for (let i = 0; i < pageCount; i += 1) {
-    const suffix = i === 0 ? "cover" : `page-${String(i + 1).padStart(2, "0")}`;
-    await pages.nth(i).screenshot({
-      path: path.join(config.outputDir, `${String(i + 1).padStart(2, "0")}-${suffix}.png`)
+  let report;
+  let pageCount;
+  try {
+    const page = await browser.newPage({
+      viewport: { width: 1180, height: 1520 },
+      deviceScaleFactor: 1
     });
-  }
+    page.on("console", (msg) => {
+      if (msg.type() === "error") errors.push(msg.text());
+      if (msg.type() === "warning") warnings.push(msg.text());
+    });
+    page.on("pageerror", (err) => pageErrors.push(err.message));
 
-  await browser.close();
+    await page.goto(pathToFileURL(reportPath).href, { waitUntil: "load" });
+    await page.waitForFunction(() => window.__dailyReady === true, { timeout: 10000 });
+    report = await collectReportMetrics(page);
+
+    await page.addStyleTag({ content: `
+      body { margin: 0 !important; background: transparent !important; }
+      .toolbar { display: none !important; }
+      .deck { display: block !important; padding: 0 !important; }
+      .page { margin: 0 !important; box-shadow: none !important; }
+    `});
+
+    const pages = page.locator(".page");
+    pageCount = await pages.count();
+    for (let i = 0; i < pageCount; i += 1) {
+      const suffix = i === 0 ? "cover" : `page-${String(i + 1).padStart(2, "0")}`;
+      await pages.nth(i).screenshot({
+        path: path.join(config.outputDir, `${String(i + 1).padStart(2, "0")}-${suffix}.png`)
+      });
+    }
+  } finally {
+    await browser.close();
+  }
 
   const manifest = {
     generatedAt: new Date().toISOString(),
@@ -155,7 +158,7 @@ function parseScalar(value) {
 
 function normalizeConfig(meta, inputPath, outputOverride) {
   const contentDate = String(meta.content_date || "");
-  const outputName = String(meta.output_name || (contentDate ? `daily-report-${contentDate}` : path.basename(inputPath, path.extname(inputPath))));
+  const outputName = sanitizeFileName(meta.output_name || (contentDate ? `daily-report-${contentDate}` : path.basename(inputPath, path.extname(inputPath))));
   const outputDir = path.resolve(process.cwd(), outputOverride || meta.output_dir || path.join("output", outputName));
   return {
     accountName: String(meta.account_name || "每日资讯账号"),
@@ -168,6 +171,14 @@ function normalizeConfig(meta, inputPath, outputOverride) {
     template: String(meta.template || "public-safe-gradient"),
     canvas: "1080x1440"
   };
+}
+
+function sanitizeFileName(value) {
+  const sanitized = String(value)
+    .replace(/[^\w\u4e00-\u9fa5.-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!sanitized || /^\.+$/u.test(sanitized)) return "daily-report";
+  return sanitized;
 }
 
 function parseArticle(body) {

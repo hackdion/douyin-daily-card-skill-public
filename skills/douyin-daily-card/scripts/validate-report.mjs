@@ -22,6 +22,7 @@ async function main() {
   if (!fsSync.existsSync(reportPath)) throw new Error(`Missing report.html: ${reportPath}`);
   if (!fsSync.existsSync(manifestPath)) throw new Error(`Missing render-manifest.json: ${manifestPath}`);
   const reportSource = await fs.readFile(reportPath, "utf8");
+  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
 
   const pngFiles = (await fs.readdir(outputDir))
     .filter((file) => /^[0-9][0-9]-.*\.png$/.test(file))
@@ -33,53 +34,64 @@ async function main() {
 
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1180, height: 1520 }, deviceScaleFactor: 1 });
   const errors = [];
   const warnings = [];
   const pageErrors = [];
-  page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(msg.text());
-    if (msg.type() === "warning") warnings.push(msg.text());
-  });
-  page.on("pageerror", (err) => pageErrors.push(err.message));
-  await page.goto(pathToFileURL(reportPath).href, { waitUntil: "load" });
-  await page.waitForFunction(() => window.__dailyReady === true, { timeout: 10000 });
-  const bodyText = await page.evaluate(() => document.body.innerText || "");
-  const report = await page.evaluate(() => {
-    const pages = [...document.querySelectorAll(".page")];
-    const contentPages = [...document.querySelectorAll(".content-page")];
-    const coverText = document.querySelector(".cover")?.innerText || "";
-    return {
-      pageCount: pages.length,
-      allPageSizesOk: pages.every((p) => p.offsetWidth === 1080 && p.offsetHeight === 1440),
-      hasDailyNewsText: document.body.innerText.includes("DAILY NEWS"),
-      coverHasExtraSummary: /今日摘要|关键词/.test(coverText),
-      measureEmpty: document.getElementById("measure").innerHTML.trim() === "",
-      overflowCount: contentPages.filter((p) => {
-        const c = p.querySelector(".page-content");
-        return c.scrollHeight > c.clientHeight + 1;
-      }).length,
-      orphanFindings: contentPages.map((p, i) => {
-        const blocks = [...p.querySelectorAll(".page-content > .block")];
-        const last = blocks.at(-1);
-        const lastText = last?.innerText?.trim() || "";
-        return {
-          page: i + 2,
-          lastType: last?.dataset.blockType || null,
-          lastText: lastText.slice(0, 120),
-          orphanHeading: ["section", "subhead"].includes(last?.dataset.blockType),
-          orphanLeadIn: /[：:]$/.test(lastText),
-          whyWithoutHow: lastText.startsWith("为什么现在做：")
-        };
-      }).filter((item) => item.orphanHeading || item.orphanLeadIn || item.whyWithoutHow)
-    };
-  });
-  await browser.close();
+  let bodyText;
+  let report;
+  try {
+    const page = await browser.newPage({ viewport: { width: 1180, height: 1520 }, deviceScaleFactor: 1 });
+    page.on("console", (msg) => {
+      if (msg.type() === "error") errors.push(msg.text());
+      if (msg.type() === "warning") warnings.push(msg.text());
+    });
+    page.on("pageerror", (err) => pageErrors.push(err.message));
+    await page.goto(pathToFileURL(reportPath).href, { waitUntil: "load" });
+    await page.waitForFunction(() => window.__dailyReady === true, { timeout: 10000 });
+    bodyText = await page.evaluate(() => document.body.innerText || "");
+    report = await page.evaluate(() => {
+      const pages = [...document.querySelectorAll(".page")];
+      const contentPages = [...document.querySelectorAll(".content-page")];
+      const coverText = document.querySelector(".cover")?.innerText || "";
+      return {
+        pageCount: pages.length,
+        allPageSizesOk: pages.every((p) => p.offsetWidth === 1080 && p.offsetHeight === 1440),
+        hasDailyNewsText: document.body.innerText.includes("DAILY NEWS"),
+        coverHasExtraSummary: /今日摘要|关键词/.test(coverText),
+        measureEmpty: document.getElementById("measure").innerHTML.trim() === "",
+        overflowCount: contentPages.filter((p) => {
+          const c = p.querySelector(".page-content");
+          return c.scrollHeight > c.clientHeight + 1;
+        }).length,
+        orphanFindings: contentPages.map((p, i) => {
+          const blocks = [...p.querySelectorAll(".page-content > .block")];
+          const last = blocks.at(-1);
+          const lastText = last?.innerText?.trim() || "";
+          return {
+            page: i + 2,
+            lastType: last?.dataset.blockType || null,
+            lastText: lastText.slice(0, 120),
+            orphanHeading: ["section", "subhead"].includes(last?.dataset.blockType),
+            orphanLeadIn: /[：:]$/.test(lastText),
+            whyWithoutHow: lastText.startsWith("为什么现在做：")
+          };
+        }).filter((item) => item.orphanHeading || item.orphanLeadIn || item.whyWithoutHow)
+      };
+    });
+  } finally {
+    await browser.close();
+  }
 
   const publicBrandResidue = [
     ...findPublicBrandResidue("report.html source", reportSource),
     ...findPublicBrandResidue("body innerText", bodyText)
   ];
+  const manifestConsoleErrors = Array.isArray(manifest.validationPreview?.consoleErrors)
+    ? manifest.validationPreview.consoleErrors
+    : [];
+  const manifestPageErrors = Array.isArray(manifest.validationPreview?.pageErrors)
+    ? manifest.validationPreview.pageErrors
+    : [];
 
   const checks = [
     ["png-count", pngFiles.length === report.pageCount, `${pngFiles.length} png / ${report.pageCount} pages`],
@@ -87,6 +99,8 @@ async function main() {
     ["dom-page-size", report.allPageSizesOk, "all .page nodes are 1080x1440"],
     ["console-errors", errors.length === 0, `${errors.length}`],
     ["page-errors", pageErrors.length === 0, `${pageErrors.length}`],
+    ["render-console-errors", manifestConsoleErrors.length === 0, JSON.stringify(manifestConsoleErrors)],
+    ["render-page-errors", manifestPageErrors.length === 0, JSON.stringify(manifestPageErrors)],
     ["overflow", report.overflowCount === 0, `${report.overflowCount}`],
     ["daily-news-visible-text", !report.hasDailyNewsText, `${report.hasDailyNewsText}`],
     ["cover-extra-summary-keywords", !report.coverHasExtraSummary, `${report.coverHasExtraSummary}`],
@@ -104,6 +118,8 @@ async function main() {
     errors,
     warnings,
     pageErrors,
+    manifestConsoleErrors,
+    manifestPageErrors,
     publicBrandResidue,
     report,
     checks,
@@ -139,6 +155,8 @@ async function appendValidationMarkdown(outputDir, validation) {
     `- PNG count: \`${validation.pngFiles.length}\``,
     `- Console errors: \`${validation.errors.length}\``,
     `- Page errors: \`${validation.pageErrors.length}\``,
+    `- Render console errors: \`${validation.manifestConsoleErrors.length}\``,
+    `- Render page errors: \`${validation.manifestPageErrors.length}\``,
     `- Overflow count: \`${validation.report.overflowCount}\``,
     `- Orphan findings: \`${validation.report.orphanFindings.length}\``,
     `- Public brand residue findings: \`${validation.publicBrandResidue.length}\``,

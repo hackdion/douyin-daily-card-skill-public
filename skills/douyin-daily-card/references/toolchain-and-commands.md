@@ -50,3 +50,13 @@ Every final report must include:
 - overflow count;
 - orphan heading/lead-in count;
 - whether `render-manifest.json` and `process-and-params.md` exist.
+
+For template JSON output, also include:
+
+- `template-render-manifest.json` path;
+- `template-validation-report.json` path;
+- whether PNG path stayed inside the output directory;
+- manifest config validation result;
+- render-time console/page error counts;
+- validation-time console/page error counts;
+- movable text field overflow count.

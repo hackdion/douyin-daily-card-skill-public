@@ -31,6 +31,8 @@ template: public-safe-v1-white-tech
 - `output_name`: output folder name under `output/` unless `output_dir` is provided.
 - `template`: currently use `public-safe-v1-white-tech`.
 
+`output_name` must be a plain folder name. Path-like values and pure dot names are normalized to a safe default before writing files.
+
 ## Optional Fields
 
 - `output_dir`: absolute or workspace-relative output directory.

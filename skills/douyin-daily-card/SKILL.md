@@ -48,6 +48,9 @@ If the user asks to visually tune a cover/base template or adjust positions/font
 - Do not auto-select templates whose registry status is `draft` or `beta`; use them only when the user explicitly asks for an experimental template.
 - When collecting public assets, use `../../工具/素材候选预览页.html` and `../../数据/公开素材候选表.csv` as the review surface before downloading anything into the repository.
 - Treat `../../工具/交互式封面底图编辑器.html` as beta: it is suitable for public-safe interactive exploration, but final PNG output must still be produced and checked by scripts.
+- For `render-template.mjs`, only use allowed IDs: `mode` is `cover` or `base`; `preset` is `morning/noon/night/mon/tue/wed/thu/fri/sat/sun`; `role` is `robot/star/sprite/boxbot`.
+- Template text fields must be non-empty and no longer than 240 characters; layout `x/y/size` values must be finite numbers inside the script limits.
+- `validate-template.mjs` must pass `png-path-inside-output`, `manifest-config-valid`, `render-console-errors`, `render-page-errors`, and `field-bounds`; do not publish if any one of them fails.
 
 ## Standard Commands
 

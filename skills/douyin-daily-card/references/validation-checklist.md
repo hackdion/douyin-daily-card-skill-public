@@ -20,3 +20,17 @@ The output passes only when all items are true:
 
 If any item fails, do not publish or claim completion. Fix the HTML/parser/pagination and rerun validation.
 
+For interactive cover/base template output, these additional checks must pass:
+
+- `template-render-manifest.json` exists.
+- `template-validation-report.json` exists.
+- PNG path stays inside the requested output directory.
+- Manifest config uses allowed `mode`, `preset`, and `role` IDs only.
+- Text fields are non-empty and no longer than `240` characters.
+- Layout values are finite numbers inside script limits.
+- Render-time console errors: `0`.
+- Render-time page errors: `0`.
+- Validation-time console errors: `0`.
+- Validation-time page errors: `0`.
+- Actual bounds of every movable text field stay inside the `1080 x 1440` canvas.
+- Public-safe blocked-term findings: `0`.

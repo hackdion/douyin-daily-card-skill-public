@@ -10,6 +10,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..", "..", "..");
 const require = createRequire(import.meta.url);
+const ALLOWED_MODES = new Set(["cover", "base"]);
+const ALLOWED_PRESETS = new Set(["morning", "noon", "night", "mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
+const ALLOWED_ROLES = new Set(["robot", "star", "sprite", "boxbot"]);
+const FIELD_LIMITS = {
+  account: { x: [0, 980], y: [0, 1360], size: [16, 160] },
+  title: { x: [0, 980], y: [0, 1360], size: [16, 160] },
+  date: { x: [0, 980], y: [0, 1360], size: [16, 160] },
+  douyin: { x: [0, 980], y: [0, 1360], size: [16, 160] },
+  tag: { x: [0, 980], y: [0, 1360], size: [16, 160] }
+};
 
 main().catch((error) => {
   console.error(error.stack || error.message || String(error));
@@ -31,41 +41,46 @@ async function main() {
 
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 1080, height: 1440 }, deviceScaleFactor: 1 });
   const consoleErrors = [];
   const pageErrors = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
-  });
-  page.on("pageerror", (error) => pageErrors.push(error.message));
+  let metrics;
+  let reportHtml;
+  try {
+    const page = await browser.newPage({ viewport: { width: 1080, height: 1440 }, deviceScaleFactor: 1 });
+    page.on("console", (message) => {
+      if (message.type() === "error") consoleErrors.push(message.text());
+    });
+    page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.goto(pathToFileURL(editorPath).href, { waitUntil: "domcontentloaded" });
-  await page.waitForSelector("[data-testid='card-canvas']", { timeout: 10000 });
-  await importConfig(page, config.renderState);
-  await prepareCanvasForExport(page);
+    await page.goto(pathToFileURL(editorPath).href, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector("[data-testid='card-canvas']", { timeout: 10000 });
+    await importConfig(page, config.renderState);
+    await prepareCanvasForExport(page);
 
-  const canvas = page.locator("[data-testid='card-canvas']");
-  await canvas.screenshot({ path: path.join(config.outputDir, config.pngName) });
+    const canvas = page.locator("[data-testid='card-canvas']");
+    await canvas.screenshot({ path: path.join(config.outputDir, config.pngName) });
 
-  const metrics = await page.evaluate(() => {
-    const canvas = document.querySelector("[data-testid='card-canvas']");
-    const rect = canvas.getBoundingClientRect();
-    return {
-      canvasWidth: canvas.offsetWidth,
-      canvasHeight: canvas.offsetHeight,
-      boundingWidth: Math.round(rect.width),
-      boundingHeight: Math.round(rect.height),
-      mode: canvas.className,
-      bodyText: document.body.innerText
-    };
-  });
+    metrics = await page.evaluate(() => {
+      const canvas = document.querySelector("[data-testid='card-canvas']");
+      const rect = canvas.getBoundingClientRect();
+      return {
+        canvasWidth: canvas.offsetWidth,
+        canvasHeight: canvas.offsetHeight,
+        boundingWidth: Math.round(rect.width),
+        boundingHeight: Math.round(rect.height),
+        mode: canvas.className,
+        bodyText: document.body.innerText
+      };
+    });
 
-  await page.evaluate(() => {
-    document.querySelectorAll("script").forEach((script) => script.remove());
-  });
-  const reportHtml = await page.content();
+    await page.evaluate(() => {
+      document.querySelectorAll("script").forEach((script) => script.remove());
+    });
+    reportHtml = await page.content();
+  } finally {
+    await browser.close();
+  }
   await fs.writeFile(path.join(config.outputDir, "template-render-source.html"), reportHtml, "utf8");
-  await browser.close();
 
   const manifest = {
     generatedAt: new Date().toISOString(),
@@ -117,10 +132,10 @@ function parseArgs(argv) {
 }
 
 function normalizeConfig(rawConfig, inputPath, outputOverride) {
-  const renderState = mergeState(defaultState(), rawConfig);
+  const renderState = validateRenderState(mergeState(defaultState(), rawConfig));
   const outputName = sanitizeFileName(rawConfig.outputName || `${renderState.preset}-${renderState.mode}-template`);
-  const outputDir = path.resolve(process.cwd(), outputOverride || rawConfig.outputDir || path.join("output", outputName));
-  const pngName = `${renderState.mode}-${renderState.preset}-${renderState.role}.png`;
+  const outputDir = resolveOutputDir(outputOverride, rawConfig.outputDir, outputName);
+  const pngName = `${safeFilePart(renderState.mode)}-${safeFilePart(renderState.preset)}-${safeFilePart(renderState.role)}.png`;
   return {
     inputPath,
     outputName,
@@ -165,6 +180,48 @@ function mergeState(base, incoming) {
       tag: { ...base.layout.tag, ...(incoming.layout?.tag || {}) }
     }
   };
+}
+
+function validateRenderState(renderState) {
+  if (!ALLOWED_MODES.has(renderState.mode)) {
+    throw new Error(`Invalid mode: ${renderState.mode}. Allowed: ${[...ALLOWED_MODES].join(", ")}`);
+  }
+  if (!ALLOWED_PRESETS.has(renderState.preset)) {
+    throw new Error(`Invalid preset: ${renderState.preset}. Allowed: ${[...ALLOWED_PRESETS].join(", ")}`);
+  }
+  if (!ALLOWED_ROLES.has(renderState.role)) {
+    throw new Error(`Invalid role: ${renderState.role}. Allowed: ${[...ALLOWED_ROLES].join(", ")}`);
+  }
+
+  const normalized = {
+    ...renderState,
+    text: {},
+    layout: {}
+  };
+  for (const field of Object.keys(FIELD_LIMITS)) {
+    normalized.text[field] = normalizeText(renderState.text?.[field], field);
+    normalized.layout[field] = {};
+    for (const prop of Object.keys(FIELD_LIMITS[field])) {
+      normalized.layout[field][prop] = normalizeNumber(renderState.layout?.[field]?.[prop], FIELD_LIMITS[field][prop], `${field}.${prop}`);
+    }
+  }
+  return normalized;
+}
+
+function normalizeText(value, field) {
+  const text = String(value ?? "");
+  if (text.length > 240) {
+    throw new Error(`Text field ${field} is too long: ${text.length} characters. Max: 240`);
+  }
+  return text;
+}
+
+function normalizeNumber(value, [min, max], label) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    throw new Error(`Invalid numeric layout value: ${label}=${value}`);
+  }
+  return Math.min(max, Math.max(min, Math.round(number)));
 }
 
 async function importConfig(page, renderState) {
@@ -243,7 +300,37 @@ function buildProcessMarkdown(manifest) {
 }
 
 function sanitizeFileName(value) {
-  return String(value).replace(/[^\w\u4e00-\u9fa5.-]+/g, "-").replace(/^-+|-+$/g, "") || "template-render";
+  const sanitized = String(value)
+    .replace(/[^\w\u4e00-\u9fa5.-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!sanitized || /^\.+$/u.test(sanitized)) return "template-render";
+  return sanitized;
+}
+
+function resolveOutputDir(outputOverride, configOutputDir, outputName) {
+  if (outputOverride) return path.resolve(process.cwd(), outputOverride);
+  if (configOutputDir) return resolveSafeConfigOutputDir(configOutputDir);
+  return path.resolve(process.cwd(), "output", outputName);
+}
+
+function resolveSafeConfigOutputDir(value) {
+  const text = String(value || "");
+  if (!text || text.includes("\0") || path.isAbsolute(text)) {
+    throw new Error("Config outputDir must be a safe relative path. Use --output for an explicit absolute destination.");
+  }
+  const normalized = path.normalize(text);
+  if (normalized === "." || normalized === ".." || normalized.startsWith(`..${path.sep}`)) {
+    throw new Error("Config outputDir cannot point outside the current workspace. Use --output for an explicit destination.");
+  }
+  return path.resolve(process.cwd(), normalized);
+}
+
+function safeFilePart(value) {
+  const text = String(value);
+  if (!/^[a-z0-9-]+$/i.test(text)) {
+    throw new Error(`Unsafe file name segment: ${text}`);
+  }
+  return text;
 }
 
 async function loadPlaywright() {

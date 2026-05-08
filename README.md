@@ -77,6 +77,8 @@ node skills/douyin-daily-card/scripts/render-template.mjs skills/douyin-daily-ca
 node skills/douyin-daily-card/scripts/validate-template.mjs /tmp/daily-card-template-test
 ```
 
+交互式模板验证会额外检查：PNG 是否仍在输出目录内、模板配置 ID 是否合法、文字是否过长、文字实际边界是否超出画布，以及渲染阶段和验证阶段是否有页面错误。
+
 标准化设计流程：
 
 1. 先读 `文档/00-项目总说明.md`
